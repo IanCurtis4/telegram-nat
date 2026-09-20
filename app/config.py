@@ -3,11 +3,28 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from functools import lru_cache
+from urllib.parse import urlsplit, urlunsplit
 
 from dotenv import load_dotenv
 
 
 load_dotenv()
+
+
+def normalize_database_url(url: str) -> str:
+    value = (url or "").strip()
+    if not value:
+        return value
+
+    parsed = urlsplit(value)
+    scheme = parsed.scheme.lower()
+
+    if scheme in {"postgresql+asyncpg", "postgresql+psycopg"}:
+        return value
+    if scheme in {"postgresql", "postgres"}:
+        new_scheme = "postgresql+asyncpg"
+        return urlunsplit(parsed._replace(scheme=new_scheme))
+    return value
 
 
 @dataclass(frozen=True)
@@ -21,7 +38,7 @@ class Settings:
     def from_env(cls) -> "Settings":
         token = os.getenv("BOT_TOKEN", "").strip()
         admin_raw = os.getenv("ADMIN_ID", "0").strip()
-        database_url = os.getenv("DATABASE_URL", "").strip()
+        database_url = normalize_database_url(os.getenv("DATABASE_URL", "").strip())
         db_echo = os.getenv("DB_ECHO", "false").strip().lower() in {"1", "true", "yes", "on"}
 
         if not token:

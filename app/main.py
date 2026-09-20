@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
@@ -19,15 +20,21 @@ async def main() -> None:
     settings = get_settings()
     logger.info("Starting bot initialization")
 
-    bot = Bot(token=settings.bot_token, parse_mode=ParseMode.HTML)
+    bot = Bot(
+        token=settings.bot_token,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
     dp = Dispatcher(storage=MemoryStorage())
     dp.include_router(start_router)
     dp.include_router(catalog_router)
     dp.include_router(purchases_router)
     dp.include_router(admin_router)
 
-    await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+        await dp.start_polling(bot)
+    finally:
+        await bot.session.close()
 
 
 if __name__ == "__main__":

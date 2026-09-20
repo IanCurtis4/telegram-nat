@@ -1,77 +1,85 @@
 # Telegram Adult Content Store Bot MVP
 
-Este projeto é um MVP de bot Telegram para venda de conteúdo digital adulto, com foco em segurança básica, clareza de código e facilidade de hospedagem.
+Este projeto é um bot Telegram para venda de conteúdo digital adulto em modelo MVP, com foco em simplicidade, segurança básica e compatibilidade com deploy em container.
 
 ## Requisitos
 
 - Python 3.11+
 - PostgreSQL
-- Bot do Telegram criado com o BotFather
-- Banco PostgreSQL acessível
+- Bot do Telegram criado via BotFather
+- banco PostgreSQL acessível
 
-## Configuração local
+## Desenvolvimento local
 
-1. Crie o bot no BotFather e copie o token do bot.
-2. Copie o arquivo `.env.example` para `.env`.
-3. Configure as variáveis de ambiente:
-
-```bash
-cp .env.example .env
-```
-
-Edite o `.env` com os valores reais:
+Configure as variáveis de ambiente no shell ou em um arquivo `.env` local.
 
 ```env
-BOT_TOKEN=SEU_TOKEN_AQUI
-ADMIN_ID=SEU_TELEGRAM_ID
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/telegram_nat
+BOT_TOKEN=
+ADMIN_ID=
+DATABASE_URL=
 DB_ECHO=false
 ```
 
-4. Crie um PostgreSQL local e configure a URL do banco.
-5. Instale as dependências:
+Exemplo de execução local em Windows PowerShell:
 
-```bash
+```powershell
 python -m venv .venv
-. .venv/bin/activate  # Linux/macOS
-# ou .venv\Scripts\activate  # Windows
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-```
-
-6. Rode as migrations:
-
-```bash
 alembic upgrade head
-```
-
-7. Inicie o bot:
-
-```bash
 python -m app.main
 ```
 
-8. Cadastre o primeiro produto pelo admin dentro do Telegram.
+Exemplo em Linux/macOS:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head
+python -m app.main
+```
+
+> O arquivo `.env` nunca deve ser enviado ao repositório.
+
+## Deploy no Railway
+
+No serviço da aplicação, configure as seguintes variáveis de ambiente:
+
+```text
+BOT_TOKEN
+ADMIN_ID
+DATABASE_URL
+DB_ECHO
+```
+
+A aplicação usa `DATABASE_URL` e normaliza automaticamente URLs como `postgresql://` e `postgres://` para `postgresql+asyncpg://` antes de conectar ao SQLAlchemy.
+
+O deploy executa a migração antes do startup:
+
+```text
+alembic upgrade head
+python -m app.main
+```
+
+Não armazene credenciais no código, no repositório ou em arquivos versionados.
 
 ## Estrutura do projeto
 
 - `app/` — código do bot
-- `migrations/` — migrations do Alembic
+- `migrations/` — schema do Alembic
 - `tests/` — testes automatizados
 
-## Desenvolvimento e deploy
+## Segurança
 
-- Use `long polling` neste MVP.
-- O estado persistente fica no PostgreSQL.
-- A aplicação foi pensada para rodar em Railway com um container Docker simples.
+- nunca grave token, senha ou chave no repositório
+- use somente `ADMIN_ID` para ações administrativas
+- valide transações no servidor e não confie em dados do cliente
+- mantenha o bot em long polling neste MVP
 
-## Observações de segurança
-
-- Nunca armazene tokens ou senhas no código.
-- Só use `ADMIN_ID` para ações administrativas.
-- Nunca confie em dados vindos do cliente para validar transações.
-
-## Testes
+## Validação
 
 ```bash
+python -m compileall app
 pytest -q
 ```
